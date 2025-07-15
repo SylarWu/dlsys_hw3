@@ -43,7 +43,28 @@ void Fill(AlignedArray* out, scalar_t val) {
   }
 }
 
+bool increase(std::vector<int32_t>& indexes, std::vector<int32_t> shape) {
+    size_t cur = shape.size() - 1;
 
+    indexes[cur] += 1;
+
+    while (cur > 0 && indexes[cur] >= shape[cur]) {
+        indexes[cur] = 0;
+        indexes[--cur] += 1;
+    }
+    if (cur == 0 && indexes[cur] >= shape[cur]) {
+        indexes[cur] = 0;
+        return true;
+    }
+    return false;
+}
+size_t calc_index(std::vector<int32_t> indexes, std::vector<int32_t> strides) {
+    size_t ret = 0;
+    for (size_t cur = 0; cur < indexes.size(); ++cur) {
+        ret += indexes[cur] * strides[cur];
+    }
+    return ret;
+}
 
 void Compact(const AlignedArray& a, AlignedArray* out, std::vector<int32_t> shape,
              std::vector<int32_t> strides, size_t offset) {
@@ -62,7 +83,14 @@ void Compact(const AlignedArray& a, AlignedArray* out, std::vector<int32_t> shap
    *  function will implement here, so we won't repeat this note.)
    */
   /// BEGIN SOLUTION
-  assert(false && "Not Implemented");
+  assert(shape.size() == strides.size() && "size of shape is not equal to size of strides");
+  // init indexes
+  std::vector<int32_t> indexes(shape.size());
+  size_t i = 0;
+  do {
+    out->ptr[i] = a.ptr[offset + calc_index(indexes, strides)];
+    ++i;
+  } while(!increase(indexes, shape));
   /// END SOLUTION
 }
 
