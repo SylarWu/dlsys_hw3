@@ -400,7 +400,7 @@ class NDArray:
         offset = self._offset
 
         for i, sl in enumerate(idxs):
-            shape[i] = (sl.stop - sl.start) // sl.step
+            shape[i] = (sl.stop - sl.start + sl.step - 1) // sl.step
             strides[i] = self.strides[i] * sl.step
             offset += self.strides[i] * sl.start
 
