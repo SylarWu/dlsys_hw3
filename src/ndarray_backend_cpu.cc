@@ -212,7 +212,15 @@ void Matmul(const AlignedArray& a, const AlignedArray& b, AlignedArray* out, uin
    */
 
   /// BEGIN SOLUTION
-  assert(false && "Not Implemented");
+  for (size_t i = 0; i < m; ++i) {
+    for (size_t j = 0; j < p; ++j) {
+      size_t cur = i * p + j;
+      out->ptr[cur] = 0;
+      for (size_t k = 0; k < n; ++k) {
+        out->ptr[cur] += a.ptr[i * n + k] * b.ptr[k * p + j];
+      }
+    }
+  }
   /// END SOLUTION
 }
 
@@ -357,7 +365,7 @@ PYBIND11_MODULE(ndarray_backend_cpu, m) {
   // m.def("ewise_exp", EwiseExp);
   // m.def("ewise_tanh", EwiseTanh);
 
-  // m.def("matmul", Matmul);
+   m.def("matmul", Matmul);
   // m.def("matmul_tiled", MatmulTiled);
 
   // m.def("reduce_max", ReduceMax);
