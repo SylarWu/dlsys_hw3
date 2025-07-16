@@ -101,9 +101,8 @@ void Compact(const AlignedArray& a, AlignedArray* out, std::vector<int32_t> shap
    *  function will implement here, so we won't repeat this note.)
    */
   /// BEGIN SOLUTION
-  // init index
-  AlignedArrayIndex index(shape, strides, offset);
   size_t i = 0;
+  AlignedArrayIndex index(shape, strides, offset);
   while(!index.is_end()) {
     out->ptr[i++] = a.ptr[index];
     index.next();
@@ -124,7 +123,12 @@ void EwiseSetitem(const AlignedArray& a, AlignedArray* out, std::vector<int32_t>
    *   offset: offset of the *out* array (not a, which has zero offset, being compact)
    */
   /// BEGIN SOLUTION
-  assert(false && "Not Implemented");
+  size_t i = 0;
+  AlignedArrayIndex index(shape, strides, offset);
+  while(!index.is_end()) {
+    out->ptr[index] = a.ptr[i++];
+    index.next();
+  }
   /// END SOLUTION
 }
 
@@ -145,7 +149,10 @@ void ScalarSetitem(const size_t size, scalar_t val, AlignedArray* out, std::vect
    */
 
   /// BEGIN SOLUTION
-  assert(false && "Not Implemented");
+  AlignedArrayIndex index(shape, strides, offset);
+  for (size_t i = 0; i < size && !index.is_end(); ++i, index.next()) {
+    out->ptr[index] = val;
+  }
   /// END SOLUTION
 }
 
