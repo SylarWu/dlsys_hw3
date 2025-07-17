@@ -78,7 +78,23 @@ void Fill(CudaArray* out, scalar_t val) {
 ////////////////////////////////////////////////////////////////////////////////
 
 // Untility function to convert contiguous index i to memory location from strides
-
+__device__ size_t CalcIndex(size_t gid, CudaVec shape, CudaVec strides, size_t offset) {
+  // gid = reduce(lambda base, x: base + x.stride * x.index, zip(target_strides, indexes)))
+  // for 2-D example: gid = target_strides[1] * indexes[1] + target_strides[0] * indexes[0]
+  CudaVec target_strides;
+  target_strides.size = shape.size;
+  target_strides.data[shape.size - 1] = 1;
+  for (size_t i = shape.size - 2; i >= 0; --i){
+    target_strides.data[i] = target_strides.data[i+1] * shape.data[i+1];
+  }
+  size_t idx = offset;
+  for (size_t i = 0; i < shape.size; ++i) {
+    size_t skips = gid / target_strides.data[i]; // corresponding indexes[i]
+    idx += skips * strides.data[i];
+    gid %= target_strides.data[i];
+  }
+  return idx;
+}
 
 
 __global__ void CompactKernel(const scalar_t* a, scalar_t* out, size_t size, CudaVec shape,
@@ -98,7 +114,10 @@ __global__ void CompactKernel(const scalar_t* a, scalar_t* out, size_t size, Cud
   size_t gid = blockIdx.x * blockDim.x + threadIdx.x;
 
   /// BEGIN SOLUTION
-  assert(false && "Not Implemented");
+  if (gid < size) {
+    size_t idx = CalcIndex(gid, shape, strides, offset);
+    out[gid] = a[idx];
+  }
   /// END SOLUTION
 }
 
