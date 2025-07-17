@@ -357,7 +357,15 @@ void ReduceMax(const AlignedArray& a, AlignedArray* out, size_t reduce_size) {
    */
 
   /// BEGIN SOLUTION
-  assert(false && "Not Implemented");
+  assert(a.size == out->size * reduce_size && "size of a with recude_size and out is not equal");
+  size_t total_size = a.size;
+  size_t after_reduce_size = out->size;
+  for (size_t i = 0; i < after_reduce_size; ++i) {
+    out->ptr[i] = a.ptr[i * reduce_size];
+    for (size_t j = 0; j < reduce_size; ++j) {
+      out->ptr[i] = std::max(out->ptr[i], a.ptr[i * reduce_size + j]);
+    }
+  }
   /// END SOLUTION
 }
 
@@ -372,7 +380,15 @@ void ReduceSum(const AlignedArray& a, AlignedArray* out, size_t reduce_size) {
    */
 
   /// BEGIN SOLUTION
-  assert(false && "Not Implemented");
+  assert(a.size == out->size * reduce_size && "size of a with recude_size and out is not equal");
+  size_t total_size = a.size;
+  size_t after_reduce_size = out->size;
+  for (size_t i = 0; i < after_reduce_size; ++i) {
+    out->ptr[i] = 0;
+    for (size_t j = 0; j < reduce_size; ++j) {
+      out->ptr[i] += a.ptr[i * reduce_size + j];
+    }
+  }
   /// END SOLUTION
 }
 
@@ -434,6 +450,6 @@ PYBIND11_MODULE(ndarray_backend_cpu, m) {
    m.def("matmul", Matmul);
   // m.def("matmul_tiled", MatmulTiled);
 
-  // m.def("reduce_max", ReduceMax);
-  // m.def("reduce_sum", ReduceSum);
+  m.def("reduce_max", ReduceMax);
+  m.def("reduce_sum", ReduceSum);
 }
