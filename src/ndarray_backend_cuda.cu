@@ -173,7 +173,13 @@ void EwiseSetitem(const CudaArray& a, CudaArray* out, std::vector<int32_t> shape
   /// END SOLUTION
 }
 
-
+__global__ void ScalarSetitemKernel(scalar_t val, scalar_t* out, size_t size, CudaVec shape,
+                                    CudaVec strides, size_t offset) {
+  size_t gid = blockIdx.x * blockDim.x + threadIdx.x;
+  if (gid < size) {
+    out[idx] = val;
+  }
+}
 
 void ScalarSetitem(size_t size, scalar_t val, CudaArray* out, std::vector<int32_t> shape,
                    std::vector<int32_t> strides, size_t offset) {
@@ -191,7 +197,9 @@ void ScalarSetitem(size_t size, scalar_t val, CudaArray* out, std::vector<int32_
    *   offset: offset of the out array
    */
   /// BEGIN SOLUTION
-  assert(false && "Not Implemented");
+  CudaDims dim = CudaOneDim(out->size);
+  ScalarSetitemKernel<<<dim.grid, dim.block>>>(val, out->ptr,
+                                              out->size, VecToCuda(shape), VecToCuda(strides), offset);
   /// END SOLUTION
 }
 
