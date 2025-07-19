@@ -80,18 +80,12 @@ void Fill(CudaArray* out, scalar_t val) {
 // Untility function to convert contiguous index i to memory location from strides
 __device__ size_t CalcIndex(size_t gid, CudaVec shape, CudaVec strides, size_t offset) {
   // gid = reduce(lambda base, x: base + x.stride * x.index, zip(target_strides, indexes)))
-  // for 2-D example: gid = target_strides[1] * indexes[1] + target_strides[0] * indexes[0]
-  CudaVec target_strides;
-  target_strides.size = shape.size;
-  target_strides.data[shape.size - 1] = 1;
-  for (int i = shape.size - 2; i >= 0; --i){
-    target_strides.data[i] = target_strides.data[i+1] * shape.data[i+1];
-  }
+  // for 3-D example: gid = target_stdides[2] * indexes[2] + target_strides[1] * indexes[1] + target_strides[0] * indexes[0]
   size_t idx = offset;
-  for (size_t i = 0; i < shape.size; ++i) {
-    size_t skips = gid / target_strides.data[i]; // corresponding indexes[i]
-    idx += skips * strides.data[i];
-    gid %= target_strides.data[i];
+  for (int i = shape.size - 1; i >= 0; --i) {
+    size_t part_index = gid % shape.data[i];
+    idx += part_index * strides.data[i];
+    gid /= shape.data[i];
   }
   return idx;
 }
