@@ -84,7 +84,7 @@ __device__ size_t CalcIndex(size_t gid, CudaVec shape, CudaVec strides, size_t o
   CudaVec target_strides;
   target_strides.size = shape.size;
   target_strides.data[shape.size - 1] = 1;
-  for (size_t i = shape.size - 2; i >= 0; --i){
+  for (int i = shape.size - 2; i >= 0; --i){
     target_strides.data[i] = target_strides.data[i+1] * shape.data[i+1];
   }
   size_t idx = offset;
@@ -140,8 +140,7 @@ void Compact(const CudaArray& a, CudaArray* out, std::vector<int32_t> shape,
 
   // Nothing needs to be added here
   CudaDims dim = CudaOneDim(out->size);
-  CompactKernel<<<dim.grid, dim.block>>>(a.ptr, out->ptr, out->size, VecToCuda(shape),
-                                         VecToCuda(strides), offset);
+  CompactKernel<<<dim.grid, dim.block>>>(a.ptr, out->ptr, out->size, VecToCuda(shape), VecToCuda(strides), offset);
 }
 
 __global__ void EwiseSetitemKernel(const scalar_t* a, scalar_t* out, size_t size, CudaVec shape,
@@ -177,7 +176,7 @@ __global__ void ScalarSetitemKernel(scalar_t val, scalar_t* out, size_t size, Cu
                                     CudaVec strides, size_t offset) {
   size_t gid = blockIdx.x * blockDim.x + threadIdx.x;
   if (gid < size) {
-    out[idx] = val;
+    out[gid] = val;
   }
 }
 
@@ -384,10 +383,10 @@ PYBIND11_MODULE(ndarray_backend_cuda, m) {
 
   m.def("fill", Fill);
   m.def("compact", Compact);
-  m.def("ewise_setitem", EwiseSetitem);
-  m.def("scalar_setitem", ScalarSetitem);
-  m.def("ewise_add", EwiseAdd);
-  m.def("scalar_add", ScalarAdd);
+  // m.def("ewise_setitem", EwiseSetitem);
+  // m.def("scalar_setitem", ScalarSetitem);
+  // m.def("ewise_add", EwiseAdd);
+  // m.def("scalar_add", ScalarAdd);
 
   // m.def("ewise_mul", EwiseMul);
   // m.def("scalar_mul", ScalarMul);
