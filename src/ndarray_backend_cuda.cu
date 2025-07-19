@@ -166,8 +166,8 @@ void EwiseSetitem(const CudaArray& a, CudaArray* out, std::vector<int32_t> shape
    *   offset: offset of the *out* array (not a, which has zero offset, being compact)
    */
   /// BEGIN SOLUTION
-  CudaDims dim = CudaOneDim(out->size);
-  EwiseSetitemKernel<<<dim.grid, dim.block>>>(a.ptr, out->ptr, out->size, VecToCuda(shape),
+  CudaDims dim = CudaOneDim(a.size);
+  EwiseSetitemKernel<<<dim.grid, dim.block>>>(a.ptr, out->ptr, a.size, VecToCuda(shape),
                                               VecToCuda(strides), offset);
   /// END SOLUTION
 }
@@ -176,11 +176,12 @@ __global__ void ScalarSetitemKernel(scalar_t val, scalar_t* out, size_t size, Cu
                                     CudaVec strides, size_t offset) {
   size_t gid = blockIdx.x * blockDim.x + threadIdx.x;
   if (gid < size) {
-    out[gid] = val;
+    size_t idx = CalcIndex(gid, shape, strides, offset);
+    out[idx] = val;
   }
 }
 
-void ScalarSetitem(size_t size, scalar_t val, CudaArray* out, std::vector<int32_t> shape,
+void ScalarSetitem(scalar_t val, CudaArray* out, std::vector<int32_t> shape,
                    std::vector<int32_t> strides, size_t offset) {
   /**
    * Set items is a (non-compact) array
@@ -197,8 +198,7 @@ void ScalarSetitem(size_t size, scalar_t val, CudaArray* out, std::vector<int32_
    */
   /// BEGIN SOLUTION
   CudaDims dim = CudaOneDim(out->size);
-  ScalarSetitemKernel<<<dim.grid, dim.block>>>(val, out->ptr,
-                                              out->size, VecToCuda(shape), VecToCuda(strides), offset);
+  ScalarSetitemKernel<<<dim.grid, dim.block>>>(val, out->ptr, out->size, VecToCuda(shape), VecToCuda(strides), offset);
   /// END SOLUTION
 }
 
@@ -383,10 +383,10 @@ PYBIND11_MODULE(ndarray_backend_cuda, m) {
 
   m.def("fill", Fill);
   m.def("compact", Compact);
-  // m.def("ewise_setitem", EwiseSetitem);
-  // m.def("scalar_setitem", ScalarSetitem);
-  // m.def("ewise_add", EwiseAdd);
-  // m.def("scalar_add", ScalarAdd);
+  m.def("ewise_setitem", EwiseSetitem);
+  m.def("scalar_setitem", ScalarSetitem);
+  m.def("ewise_add", EwiseAdd);
+  m.def("scalar_add", ScalarAdd);
 
   // m.def("ewise_mul", EwiseMul);
   // m.def("scalar_mul", ScalarMul);

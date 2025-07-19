@@ -132,7 +132,7 @@ void EwiseSetitem(const AlignedArray& a, AlignedArray* out, std::vector<int32_t>
   /// END SOLUTION
 }
 
-void ScalarSetitem(const size_t size, scalar_t val, AlignedArray* out, std::vector<int32_t> shape,
+void ScalarSetitem(scalar_t val, AlignedArray* out, std::vector<int32_t> shape,
                    std::vector<int32_t> strides, size_t offset) {
   /**
    * Set items is a (non-compact) array
@@ -150,7 +150,7 @@ void ScalarSetitem(const size_t size, scalar_t val, AlignedArray* out, std::vect
 
   /// BEGIN SOLUTION
   AlignedArrayIndex index(shape, strides, offset);
-  for (size_t i = 0; i < size && !index.is_end(); ++i, index.next()) {
+  for (size_t i = 0; i < out->size && !index.is_end(); ++i, index.next()) {
     out->ptr[index] = val;
   }
   /// END SOLUTION

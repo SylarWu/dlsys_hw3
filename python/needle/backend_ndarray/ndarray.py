@@ -428,7 +428,6 @@ class NDArray:
             )
         else:
             self.device.scalar_setitem(
-                prod(view.shape),
                 other,
                 view._handle,
                 view.shape,
