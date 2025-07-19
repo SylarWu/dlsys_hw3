@@ -268,10 +268,136 @@ void ScalarAdd(const CudaArray& a, scalar_t val, CudaArray* out) {
  * signatures above.
  */
 
+template <typename T>
+__global__ void BiEwiseOpKernel(const scalar_t* a, const scalar_t* b, scalar_t* out, size_t size, T op) {
+  size_t gid = blockIdx.x * blockDim.x + threadIdx.x;
+  if (gid < size) out[gid] = op(a[gid], b[gid]);
+}
+ 
+template <typename T>
+__global__ void BiScalarOpKernel(const scalar_t* a, const scalar_t val, scalar_t* out, size_t size, T op) {
+  size_t gid = blockIdx.x * blockDim.x + threadIdx.x;
+  if (gid < size) out[gid] = op(a[gid], val);
+}
+template <typename T>
+__global__ void UniOpKernel(const scalar_t* a, scalar_t* out, size_t size, T op) {
+  size_t gid = blockIdx.x * blockDim.x + threadIdx.x;
+  if (gid < size) out[gid] = op(a[gid]);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Elementwise and scalar operations
 ////////////////////////////////////////////////////////////////////////////////
+struct Multiply {
+  __device__ scalar_t operator()(const scalar_t a, const scalar_t b) const {
+    return a * b;
+  }
+};
+struct Divide {
+  __device__ scalar_t operator()(const scalar_t a, const scalar_t b) const {
+    return a / b;
+  }
+};
+struct Power {
+  __device__ scalar_t operator()(const scalar_t a, const scalar_t b) const {
+    return pow(a, b);
+  }
+};
+struct Maximum {
+  __device__ scalar_t operator()(const scalar_t a, const scalar_t b) const {
+    return max(a, b);
+  }
+};
+struct Equal {
+  __device__ scalar_t operator()(const scalar_t a, const scalar_t b) const {
+    return a == b;
+  }
+};
+struct GreatEqual {
+  __device__ scalar_t operator()(const scalar_t a, const scalar_t b) const {
+    return a >= b;
+  }
+};
+struct Log {
+  __device__ scalar_t operator()(const scalar_t a) const {
+    return log(a);
+  }
+};
+struct Exp {
+  __device__ scalar_t operator()(const scalar_t a) const {
+    return exp(a);
+  }
+};
+struct Tanh {
+  __device__ scalar_t operator()(const scalar_t a) const {
+    return tanh(a);
+  }
+};
+
+
+void ScalarMul(const CudaArray& a, scalar_t val, CudaArray* out) {
+  CudaDims dim = CudaOneDim(out->size);
+  BiScalarOpKernel<<<dim.grid, dim.block>>>(a.ptr, val, out->ptr, out->size, Multiply());
+}
+void EwiseMul(const CudaArray& a, const CudaArray& b, CudaArray* out) {
+  CudaDims dim = CudaOneDim(out->size);
+  BiEwiseOpKernel<<<dim.grid, dim.block>>>(a.ptr, b.ptr, out->ptr, out->size, Multiply());
+}
+
+void ScalarDiv(const CudaArray& a, scalar_t val, CudaArray* out) {
+  CudaDims dim = CudaOneDim(out->size);
+  BiScalarOpKernel<<<dim.grid, dim.block>>>(a.ptr, val, out->ptr, out->size, Divide());
+}
+void EwiseDiv(const CudaArray& a, const CudaArray& b, CudaArray* out) {
+  CudaDims dim = CudaOneDim(out->size);
+  BiEwiseOpKernel<<<dim.grid, dim.block>>>(a.ptr, b.ptr, out->ptr, out->size, Divide());
+}
+
+void ScalarPower(const CudaArray& a, scalar_t val, CudaArray* out) {
+  CudaDims dim = CudaOneDim(out->size);
+  BiScalarOpKernel<<<dim.grid, dim.block>>>(a.ptr, val, out->ptr, out->size, Power());
+}
+
+void ScalarMaximum(const CudaArray& a, scalar_t val, CudaArray* out) {
+  CudaDims dim = CudaOneDim(out->size);
+  BiScalarOpKernel<<<dim.grid, dim.block>>>(a.ptr, val, out->ptr, out->size, Maximum());
+}
+void EwiseMaximum(const CudaArray& a, const CudaArray& b, CudaArray* out) {
+  CudaDims dim = CudaOneDim(out->size);
+  BiEwiseOpKernel<<<dim.grid, dim.block>>>(a.ptr, b.ptr, out->ptr, out->size, Maximum());
+}
+
+void ScalarEq(const CudaArray& a, scalar_t val, CudaArray* out) {
+  CudaDims dim = CudaOneDim(out->size);
+  BiScalarOpKernel<<<dim.grid, dim.block>>>(a.ptr, val, out->ptr, out->size, Equal());
+}
+void EwiseEq(const CudaArray& a, const CudaArray& b, CudaArray* out) {
+  CudaDims dim = CudaOneDim(out->size);
+  BiEwiseOpKernel<<<dim.grid, dim.block>>>(a.ptr, b.ptr, out->ptr, out->size, Equal());
+}
+
+void ScalarGe(const CudaArray& a, scalar_t val, CudaArray* out) {
+  CudaDims dim = CudaOneDim(out->size);
+  BiScalarOpKernel<<<dim.grid, dim.block>>>(a.ptr, val, out->ptr, out->size, GreatEqual());
+}
+void EwiseGe(const CudaArray& a, const CudaArray& b, CudaArray* out) {
+  CudaDims dim = CudaOneDim(out->size);
+  BiEwiseOpKernel<<<dim.grid, dim.block>>>(a.ptr, b.ptr, out->ptr, out->size, GreatEqual());
+}
+
+void EwiseLog(const CudaArray& a, CudaArray* out) {
+  CudaDims dim = CudaOneDim(out->size);
+  UniOpKernel<<<dim.grid, dim.block>>>(a.ptr, out->ptr, out->size, Log());
+}
+void EwiseExp(const CudaArray& a, CudaArray* out) {
+  CudaDims dim = CudaOneDim(out->size);
+  UniOpKernel<<<dim.grid, dim.block>>>(a.ptr, out->ptr, out->size, Exp());
+}
+void EwiseTanh(const CudaArray& a, CudaArray* out) {
+  CudaDims dim = CudaOneDim(out->size);
+  UniOpKernel<<<dim.grid, dim.block>>>(a.ptr, out->ptr, out->size, Tanh());
+}
+
 
 
 void Matmul(const CudaArray& a, const CudaArray& b, CudaArray* out, uint32_t M, uint32_t N,
@@ -388,22 +514,22 @@ PYBIND11_MODULE(ndarray_backend_cuda, m) {
   m.def("ewise_add", EwiseAdd);
   m.def("scalar_add", ScalarAdd);
 
-  // m.def("ewise_mul", EwiseMul);
-  // m.def("scalar_mul", ScalarMul);
-  // m.def("ewise_div", EwiseDiv);
-  // m.def("scalar_div", ScalarDiv);
-  // m.def("scalar_power", ScalarPower);
+  m.def("ewise_mul", EwiseMul);
+  m.def("scalar_mul", ScalarMul);
+  m.def("ewise_div", EwiseDiv);
+  m.def("scalar_div", ScalarDiv);
+  m.def("scalar_power", ScalarPower);
 
-  // m.def("ewise_maximum", EwiseMaximum);
-  // m.def("scalar_maximum", ScalarMaximum);
-  // m.def("ewise_eq", EwiseEq);
-  // m.def("scalar_eq", ScalarEq);
-  // m.def("ewise_ge", EwiseGe);
-  // m.def("scalar_ge", ScalarGe);
+  m.def("ewise_maximum", EwiseMaximum);
+  m.def("scalar_maximum", ScalarMaximum);
+  m.def("ewise_eq", EwiseEq);
+  m.def("scalar_eq", ScalarEq);
+  m.def("ewise_ge", EwiseGe);
+  m.def("scalar_ge", ScalarGe);
 
-  // m.def("ewise_log", EwiseLog);
-  // m.def("ewise_exp", EwiseExp);
-  // m.def("ewise_tanh", EwiseTanh);
+  m.def("ewise_log", EwiseLog);
+  m.def("ewise_exp", EwiseExp);
+  m.def("ewise_tanh", EwiseTanh);
 
   // m.def("matmul", Matmul);
 
