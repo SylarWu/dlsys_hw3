@@ -437,11 +437,11 @@ __global__ void SimpleReduceMaxKernel(const scalar_t* a, scalar_t* out, size_t o
   size_t gid = blockIdx.x * blockDim.x + threadIdx.x;
   if (gid < out_size) {
     size_t base = gid * reduce_size;
-    scalar_t max = a[base];
+    scalar_t val = a[base];
     for (int i = 1; i < reduce_size; ++i) {
-      max = max(max, a[base + i]);
+      val = max(val, a[base + i]);
     }
-    out[gid] = max;
+    out[gid] = val;
   }
 }
 
